@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        font-family: 'Roboto', sans-serif;
+        padding: 16px;
+        background-color: #f4f4f9;
+        color: #333;
+        font-size: 13px;
+      }
+      h2 {
+        color: #3b5323;
+        text-align: center;
+        margin: 0 0 16px;
+        font-size: 17px;
+        font-weight: 700;
+      }
+      h3 {
+        color: #3b5323;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 14px 0 8px;
+        border-bottom: 2px solid #3b5323;
+        padding-bottom: 4px;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        margin-bottom: 8px;
+      }
+      label {
+        font-size: 11px;
+        font-weight: 500;
+        color: #555;
+        text-transform: uppercase;
+      }
+      input, select {
+        padding: 8px 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 13px;
+        background: white;
+        width: 100%;
+      }
+      input:focus, select:focus {
+        border-color: #3b5323;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(59,83,35,0.15);
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+      }
+      .row > .form-group { flex: 1; }
+
+      /* Cuotas extraordinarias */
+      .extra-item {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 8px;
+        position: relative;
+      }
+      .extra-item .extra-num {
+        font-size: 11px;
+        font-weight: 700;
+        color: #3b5323;
+        margin-bottom: 6px;
+        display: block;
+      }
+      .extra-item .remove-btn {
+        position: absolute;
+        top: 6px; right: 8px;
+        background: #c0392b; color: white;
+        border: none; border-radius: 3px;
+        cursor: pointer; font-size: 11px;
+        padding: 2px 7px;
+      }
+      .add-extra-btn {
+        background: #5a7a35;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 7px 14px;
+        cursor: pointer;
+        font-size: 12px;
+        width: 100%;
+        margin-top: 4px;
+      }
+      .add-extra-btn:hover:not(:disabled) { background: #3b5323; }
+      .add-extra-btn:disabled {
+        background: #aaa;
+        cursor: not-allowed;
+      }
+      .extra-limit-msg {
+        display: none;
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 4px;
+        padding: 7px 10px;
+        font-size: 11px;
+        color: #856404;
+        margin-top: 6px;
+        text-align: center;
+      }
+
+      /* Descuento info */
+      .descuento-info {
+        background: #eaf4e0;
+        border: 1px solid #93c47d;
+        border-radius: 4px;
+        padding: 8px 10px;
+        font-size: 11px;
+        color: #274e13;
+        margin-top: 8px;
+        display: none;
+      }
+
+      /* Botón principal */
+      button#btnGenerar {
+        background-color: #3b5323;
+        color: white;
+        padding: 12px;
+        border: none;
+        border-radius: 4px;
+        font-size: 15px;
+        font-weight: bold;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 10px;
+      }
+      button#btnGenerar:hover { background-color: #2a3c18; }
+      button#btnGenerar:disabled { background-color: #ccc; cursor: not-allowed; }
+
+      .loading {
+        display: none;
+        text-align: center;
+        font-size: 12px;
+        color: #666;
+        margin-top: 8px;
+      }
+      .success-msg {
+        display: none;
+        background: #d4edda;
+        color: #155724;
+        padding: 10px;
+        border-radius: 4px;
+        margin-top: 12px;
+        text-align: center;
+        font-size: 13px;
+      }
+      .note {
+        font-size: 11px;
+        color: #888;
+        margin-top: 2px;
+      }
+      hr { border: 0; border-top: 1px solid #ddd; margin: 10px 0; }
+
+      /* Toggle switch */
+      .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+      .switch input { opacity: 0; width: 0; height: 0; }
+      .slider {
+        position: absolute; cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #ccc; border-radius: 24px;
+        transition: .3s;
+      }
+      .slider:before {
+        position: absolute; content: "";
+        height: 18px; width: 18px; left: 3px; bottom: 3px;
+        background-color: white; border-radius: 50%;
+        transition: .3s;
+      }
+      input:checked + .slider { background-color: #3b5323; }
+      input:checked + .slider:before { transform: translateX(20px); }
+    </style>
+  </head>
+  <body>
+    <h2>Nuevo Plan de Pago</h2>
+
+    <!-- ─── DATOS DEL CLIENTE ──────────────────── -->
+    <h3>Datos del Cliente</h3>
+
+    <div class="form-group">
+      <label>Nombre completo</label>
+      <input type="text" id="cliente" placeholder="Ej: Julian Martínez" required>
+    </div>
+
+    <div class="form-group">
+      <label>Documento (Cédula / Pasaporte)</label>
+      <input type="text" id="documento" placeholder="Ej: 001-0000000-0">
+    </div>
+
+    <div class="form-group">
+      <label>Vendedor</label>
+      <input type="text" id="vendedor" placeholder="Nombre del asesor" required>
+    </div>
+    <div class="form-group">
+      <label>Teléfono Vendedor <span style="color:#888;font-weight:normal">(opcional)</span></label>
+      <input type="text" id="telefonoVendedor" placeholder="Ej: 809-555-0000">
+    </div>
+
+    <!-- ─── DATOS DE LA UNIDAD ─────────────────── -->
+    <h3>Unidad</h3>
+
+    <div class="row">
+      <div class="form-group">
+        <label>Proyecto</label>
+        <input type="text" id="proyecto" value="Elements" readonly>
+      </div>
+      <div class="form-group">
+        <label>Torre</label>
+        <input type="text" id="torre" placeholder="Ej: Torre I">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Apartamento</label>
+      <input type="text" id="apto" placeholder="Ej: 305" required>
+    </div>
+
+    <!-- ─── PRECIO Y PLAN ──────────────────────── -->
+    <h3>Precio y Plan de Pago</h3>
+
+    <div class="form-group">
+      <label>Precio Total (US$)</label>
+      <input type="number" id="precio" placeholder="141054.00" step="0.01" required oninput="actualizarPreview()">
+    </div>
+
+    <div class="row">
+      <div class="form-group">
+        <label>% Inicial</label>
+        <input type="number" id="pctInicial" value="35" placeholder="35" required oninput="actualizarPreview()">
+      </div>
+      <div class="form-group">
+        <label>Reserva (US$)</label>
+        <input type="number" id="reserva" value="1000" placeholder="1000" required oninput="actualizarPreview()">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="form-group">
+        <label>Fecha de Reserva</label>
+        <input type="date" id="fechaReserva" required>
+      </div>
+      <div class="form-group">
+        <label>Fecha de Separación</label>
+        <input type="date" id="fechaSeparacion">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="form-group">
+        <label>Cant. Cuotas</label>
+        <input type="number" id="cantCuotas" value="29" min="1" required>
+      </div>
+      <div class="form-group">
+        <label>Fecha Inicio Cuotas</label>
+        <input type="date" id="fechaInicio" required>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="form-group">
+        <label>Día fijo de pago <span style="color:#888;font-weight:normal">(opcional)</span></label>
+        <select id="diaPago">
+          <option value="">— Usar día de fecha inicio —</option>
+          <option value="15">15 de cada mes (fijo)</option>
+          <option value="30">30 de cada mes (fijo)</option>
+        </select>
+      </div>
+    </div>
+    <p class="note">Si seleccionas día 15 o 30, las cuotas caerán siempre en ese día exacto, sin importar fines de semana ni feriados.</p>
+
+    <!-- ─── INICIAL PAGADO ────────────────────── -->
+    <h3>Inicial Completo en Un Solo Pago</h3>
+    <div style="background:#f0f7ea;border:1px solid #93c47d;border-radius:6px;padding:10px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <label class="switch">
+          <input type="checkbox" id="inicialPagado" onchange="toggleInicialPagado()">
+          <span class="slider"></span>
+        </label>
+        <span id="lblInicialPagado" style="font-size:13px;font-weight:600;color:#888">Cliente NO pagó el inicial completo</span>
+      </div>
+      <p class="note" style="margin:0">Si el cliente pagó el 35%-49% del inicial en un solo pago → 1% descuento. 50%+ → 2% descuento.</p>
+      <!-- FIX: elemento descuentoInfo que faltaba en el HTML original -->
+      <div class="descuento-info" id="descuentoInfo"></div>
+    </div>
+
+    <!-- ─── CUOTAS EXTRAORDINARIAS ─────────────── -->
+    <h3>Cuotas Extraordinarias</h3>
+    <p class="note">Pagos adicionales que reducen el completivo y recalculan las cuotas normales. Máximo 10.</p>
+
+    <div id="extraContainer"></div>
+    <button class="add-extra-btn" id="btnAgregarExtra" onclick="agregarExtraordinaria()">+ Agregar cuota extraordinaria (0 / 10)</button>
+    <div class="extra-limit-msg" id="extraLimitMsg">Límite máximo de 10 cuotas extraordinarias alcanzado.</div>
+
+    <!-- ─── BOTÓN ──────────────────────────────── -->
+    <button id="btnGenerar" onclick="generarPlan()">Generar Plan de Pago</button>
+
+    <div class="loading" id="loading">
+      ⏳ Procesando y generando documento...<br>(Esto toma unos segundos)
+    </div>
+
+    <div class="success-msg" id="successMsg">
+      ✅ ¡Plan generado con éxito!<br>
+      <a id="pdfLink" href="#" target="_blank">📄 Abrir / Descargar PDF</a>
+    </div>
+
+    <script>
+      var MAX_EXTRAS = 10;
+      var extraCount = 0;
+      var extraIds = []; // IDs activos de cuotas extraordinarias
+
+      // ── Set fechas por defecto
+      document.getElementById('fechaReserva').valueAsDate = new Date();
+      document.getElementById('fechaInicio').valueAsDate = new Date();
+
+      // ── Actualizar estado del botón y contador de extras
+      function actualizarEstadoExtras() {
+        var total = extraIds.length;
+        var btn = document.getElementById('btnAgregarExtra');
+        var limitMsg = document.getElementById('extraLimitMsg');
+
+        btn.textContent = '+ Agregar cuota extraordinaria (' + total + ' / ' + MAX_EXTRAS + ')';
+
+        if (total >= MAX_EXTRAS) {
+          btn.disabled = true;
+          limitMsg.style.display = 'block';
+        } else {
+          btn.disabled = false;
+          limitMsg.style.display = 'none';
+        }
+      }
+
+      // ── Agregar cuota extraordinaria
+      function agregarExtraordinaria() {
+        if (extraIds.length >= MAX_EXTRAS) return;
+
+        extraCount++;
+        var id = extraCount;
+        extraIds.push(id);
+
+        var div = document.createElement('div');
+        div.className = 'extra-item';
+        div.id = 'extra_' + id;
+        div.innerHTML =
+          '<span class="extra-num">Cuota extraordinaria #' + extraIds.length + '</span>' +
+          '<button class="remove-btn" onclick="eliminarExtraordinaria(' + id + ')">✕ Quitar</button>' +
+          '<div class="row">' +
+            '<div class="form-group">' +
+              '<label>Descripción</label>' +
+              '<input type="text" id="extDesc_' + id + '" placeholder="Ej: Cuota dic 2026">' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label>Monto (US$)</label>' +
+              '<input type="number" id="extMonto_' + id + '" placeholder="5000" min="0">' +
+            '</div>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label>Fecha</label>' +
+            '<input type="date" id="extFecha_' + id + '">' +
+          '</div>';
+
+        document.getElementById('extraContainer').appendChild(div);
+        actualizarEstadoExtras();
+      }
+
+      function eliminarExtraordinaria(id) {
+        var el = document.getElementById('extra_' + id);
+        if (el) el.remove();
+
+        var idx = extraIds.indexOf(id);
+        if (idx !== -1) extraIds.splice(idx, 1);
+
+        // Renumerar etiquetas visibles
+        var items = document.querySelectorAll('#extraContainer .extra-item .extra-num');
+        items.forEach(function(span, i) {
+          span.textContent = 'Cuota extraordinaria #' + (i + 1);
+        });
+
+        actualizarEstadoExtras();
+      }
+
+      // ── Preview descuento en tiempo real (solo cuando inicialPagado está activo)
+      function actualizarPreview() {
+        if (document.getElementById('inicialPagado').checked) {
+          mostrarInfoDescuento();
+        }
+      }
+
+      function mostrarInfoDescuento() {
+        var precio     = parseFloat(document.getElementById('precio').value) || 0;
+        var pctInicial = parseFloat(document.getElementById('pctInicial').value) || 0;
+        var infoEl     = document.getElementById('descuentoInfo');
+
+        if (precio === 0) { infoEl.style.display = 'none'; return; }
+
+        if (pctInicial >= 50) {
+          var desc = precio * 0.02;
+          infoEl.style.background = '#eaf4e0'; infoEl.style.borderColor = '#93c47d'; infoEl.style.color = '#274e13';
+          infoEl.innerHTML = '✅ <strong>Descuento del 2%</strong> — Inicial 50%+<br>Ahorro: <strong>US$' + desc.toLocaleString('en-US', {minimumFractionDigits:2}) + '</strong>';
+          infoEl.style.display = 'block';
+        } else if (pctInicial >= 35) {
+          var desc = precio * 0.01;
+          infoEl.style.background = '#eaf4e0'; infoEl.style.borderColor = '#93c47d'; infoEl.style.color = '#274e13';
+          infoEl.innerHTML = '✅ <strong>Descuento del 1%</strong> — Inicial 35%-49%<br>Ahorro: <strong>US$' + desc.toLocaleString('en-US', {minimumFractionDigits:2}) + '</strong>';
+          infoEl.style.display = 'block';
+        } else {
+          infoEl.style.background = '#fff8e1'; infoEl.style.borderColor = '#ffe082'; infoEl.style.color = '#5d4037';
+          infoEl.innerHTML = 'Inicial: <strong>' + pctInicial + '%</strong> — Sin descuento.<br><small>35%-49% → 1% &nbsp;|&nbsp; 50%+ → 2%</small>';
+          infoEl.style.display = 'block';
+        }
+      }
+
+      // ── Toggle inicial pagado completo
+      function toggleInicialPagado() {
+        var checked = document.getElementById('inicialPagado').checked;
+        var lbl     = document.getElementById('lblInicialPagado');
+        var infoEl  = document.getElementById('descuentoInfo');
+
+        lbl.textContent = checked ? '✅ Cliente pagó el inicial completo en un solo pago' : 'Cliente NO pagó el inicial completo';
+        lbl.style.color = checked ? '#274e13' : '#888';
+
+        if (checked) {
+          mostrarInfoDescuento();
+        } else {
+          infoEl.style.display = 'none';
+        }
+      }
+
+      // ── Generar Plan
+      function generarPlan() {
+        var btn  = document.getElementById('btnGenerar');
+        var load = document.getElementById('loading');
+        var msg  = document.getElementById('successMsg');
+
+        // Validación campos requeridos
+        var required = ['cliente', 'apto', 'precio', 'vendedor', 'fechaInicio'];
+        for (var i = 0; i < required.length; i++) {
+          if (!document.getElementById(required[i]).value) {
+            alert('Por favor completa el campo: ' + required[i]);
+            return;
+          }
+        }
+
+        // Recolectar extraordinarias activas
+        var extraordinarias = [];
+        extraIds.forEach(function(id) {
+          var montoEl = document.getElementById('extMonto_' + id);
+          if (!montoEl) return;
+          var monto = parseFloat(montoEl.value);
+          if (monto > 0) {
+            extraordinarias.push({
+              monto:       monto,
+              descripcion: document.getElementById('extDesc_' + id).value || ('EXTRAORDINARIA ' + id),
+              fecha:       document.getElementById('extFecha_' + id).value || ''
+            });
+          }
+        });
+
+        var data = {
+          cliente:           document.getElementById('cliente').value,
+          documento:         document.getElementById('documento').value,
+          proyecto:          document.getElementById('proyecto').value,
+          torre:             document.getElementById('torre').value,
+          apto:              document.getElementById('apto').value,
+          vendedor:          document.getElementById('vendedor').value,
+          telefonoVendedor:  document.getElementById('telefonoVendedor').value,
+          precio:            document.getElementById('precio').value,
+          pctInicial:        document.getElementById('pctInicial').value,
+          reserva:           document.getElementById('reserva').value,
+          cantCuotas:        document.getElementById('cantCuotas').value,
+          fechaReserva:      document.getElementById('fechaReserva').value,
+          fechaSeparacion:   document.getElementById('fechaSeparacion').value,
+          fechaInicio:       document.getElementById('fechaInicio').value,
+          diaPago:           document.getElementById('diaPago').value,
+          aplicarDescuento:  true,
+          inicialPagado:     document.getElementById('inicialPagado').checked,
+          extraordinarias:   extraordinarias
+        };
+
+        btn.disabled = true;
+        btn.innerText = 'Generando...';
+        load.style.display = 'block';
+        msg.style.display = 'none';
+
+        google.script.run
+          .withSuccessHandler(function(response) {
+            btn.disabled = false;
+            btn.innerText = 'Generar Plan de Pago';
+            load.style.display = 'none';
+            if (response.success) {
+              msg.style.display = 'block';
+              document.getElementById('pdfLink').href = response.url;
+            }
+          })
+          .withFailureHandler(function(err) {
+            alert('Error: ' + err);
+            btn.disabled = false;
+            btn.innerText = 'Generar Plan de Pago';
+            load.style.display = 'none';
+          })
+          .procesarPlanDePago(data);
+      }
+    </script>
+  </body>
+</html>
